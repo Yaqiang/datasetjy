@@ -25,7 +25,7 @@ public class NCUtil {
      * @return MeteoThink data type
      */
     public static DataType convertDataType(ucar.ma2.DataType ncDataType) {
-        DataType dataType = DataType.valueOf(ncDataType.toString());
+        DataType dataType = DataType.getType(ncDataType.toString());
         
         return dataType;
     }
@@ -47,7 +47,11 @@ public class NCUtil {
      * @return MeteoThink array
      */
     public static Array convertArray(ucar.ma2.Array ncArray) {
-        Array array = Array.factory(convertDataType(ncArray.getDataType()), ncArray.getShape(), ncArray.getStorage());
+        DataType dt = convertDataType(ncArray.getDataType());
+        if (dt == DataType.OBJECT && ncArray.getObject(0).getClass() == String.class){
+            dt = DataType.STRING;
+        }
+        Array array = Array.factory(dt, ncArray.getShape(), ncArray.getStorage());
         
         return array;
     }
