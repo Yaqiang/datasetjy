@@ -200,7 +200,7 @@ public class Attribute {
      */
     public void setStringValue(String val) {
         if (val == null) {
-            throw new IllegalArgumentException("Attribute value cannot be null");
+            return;
         }
 
         // get rid of trailing nul characters
