@@ -49,11 +49,6 @@
             <artifactId>DataframeJy</artifactId>
             <version>0.1.0-SNAPSHOT</version>
         </dependency>
-        <dependency>
-            <groupId>org.meteothink</groupId>
-            <artifactId>meteothink-common</artifactId>
-            <version>0.1.0-SNAPSHOT</version>
-        </dependency>
     </dependencies>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
