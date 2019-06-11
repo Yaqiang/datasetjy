@@ -1780,9 +1780,14 @@ public class NetCDFDataInfo extends DataInfo {
                 String hmsStr = dataArray[3];
                 hmsStr = hmsStr.replace("0.0", "00");
                 try {
-                    hour = Integer.parseInt(hmsStr.split(":")[0]);
-                    min = Integer.parseInt(hmsStr.split(":")[1]);
-                    sec = Integer.parseInt(hmsStr.split(":")[2]);
+                    String[] hms = hmsStr.split(":");
+                    hour = Integer.parseInt(hms[0]);
+                    if (hms.length > 1) {
+                        min = Integer.parseInt(hms[1]);
+                    }
+                    if (hms.length > 2) {
+                        sec = Integer.parseInt(hms[2]);
+                    }
                 } catch (NumberFormatException e) {
                 }
             }
@@ -1790,9 +1795,14 @@ public class NetCDFDataInfo extends DataInfo {
             String hmsStr = ST;
             hmsStr = hmsStr.replace("0.0", "00");
             try {
-                hour = Integer.parseInt(hmsStr.split(":")[0]);
-                min = Integer.parseInt(hmsStr.split(":")[1]);
-                sec = Integer.parseInt(hmsStr.split(":")[2]);
+                String[] hms = hmsStr.split(":");
+                hour = Integer.parseInt(hms[0]);
+                if (hms.length > 1) {
+                    min = Integer.parseInt(hms[1]);
+                }
+                if (hms.length > 2) {
+                    sec = Integer.parseInt(hms[2]);
+                }
             } catch (Exception e) {
             }
         }
@@ -1935,7 +1945,21 @@ public class NetCDFDataInfo extends DataInfo {
             if (ncfile == null) {
                 ncfile = NetcdfFile.open(this.getFileName());
             }
-            ucar.nc2.Variable var = ncfile.findVariable(varName);
+            ucar.nc2.Variable var = ncfile.findVariable(varName);            
+            if (var == null) {
+                List<ucar.nc2.Variable> vars = ncfile.getVariables();
+                for (ucar.nc2.Variable v : vars) {
+                    if (v.getShortName().equals(varName)) {
+                        var = v;
+                        break;
+                    }
+                }
+            }
+
+             if (var == null) {
+                System.out.println("Variable not exist: " + varName);
+                return null;
+            }
 
             Array data = NCUtil.convertArray(var.read());
 

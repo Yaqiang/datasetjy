@@ -4,7 +4,11 @@
  */
 package org.meteothink.data.meteodata.mm5;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteOrder;
@@ -103,7 +107,6 @@ public class MM5DataInfo extends DataInfo {
         try {
             RandomAccessFile br = new RandomAccessFile(fileName, "r");
             int flag;
-            SubHeader sh;
             int xn = 0, yn = 0, zn = 0;
             //byte[] bytes;
             List<Variable> variables = new ArrayList<>();
@@ -230,7 +233,7 @@ public class MM5DataInfo extends DataInfo {
                     }
                 } else if (flag == 1) {    //Read sub header
                     long pos = br.getFilePointer();
-                    sh = this.readSubHeader(br);
+                    SubHeader sh = this.readSubHeader(br);
                     sh.timeIndex = tn;
                     sh.position = pos;
                     sh.length = (int) (br.getFilePointer() - pos);
@@ -255,34 +258,6 @@ public class MM5DataInfo extends DataInfo {
                         br.skipBytes(zn * 4 + 8);
                     } else if (sh.ordering.equals("P")) {
                         br.skipBytes(zn * 4 + 8);
-                    }
-
-                    boolean isNewVar = true;
-                    for (Variable var : variables) {
-                        if (var.getName().equals(sh.name)) {
-                            isNewVar = false;
-                            break;
-                        }
-                    }
-                    if (isNewVar) {
-                        Variable var = new Variable();
-                        var.setName(sh.name);
-                        var.setDataType(DataType.FLOAT);
-                        //var.addLevel(dh.level);
-                        var.setUnits(sh.unit);
-                        var.setDescription(sh.description);
-
-                        if (sh.ordering.equals("YXS") || sh.ordering.equals("YXP")
-                                || sh.ordering.equals("YXW") || sh.ordering.equals("YX")) {
-                            var.addDimension(xdim);
-                            var.addDimension(0, ydim);
-                        }
-                        if (sh.ordering.equals("YXS") || sh.ordering.equals("YXP")
-                                || sh.ordering.equals("YXW") || sh.ordering.equals("S")
-                                || sh.ordering.equals("P")) {
-                            var.addDimension(0, zdim);
-                        }
-                        variables.add(var);
                     }
 //                    if (shIdx == 0) {
 //                        ct = format.parse(sh.current_date);
@@ -311,6 +286,55 @@ public class MM5DataInfo extends DataInfo {
             tDim.setValues(values);
             this.setTimeDimension(tDim);
             this.addDimension(tDim);
+            
+            //Set variables
+            List<SubHeader> shs = new ArrayList<>();
+            List<String> varNames = new ArrayList<>();
+            boolean nameDup = false;
+            for (SubHeader sh : this._subHeaders) {
+                if (sh.timeIndex == 0) {
+                    if (varNames.contains(sh.name)) {
+                        sh.name = sh.name + String.valueOf(varNames.size());
+                        nameDup = true;
+                    }
+                    varNames.add(sh.name);
+                    shs.add(sh);
+                }
+            }
+            if (nameDup) {
+                for (int i = 1; i < times.size(); i++) {
+                    varNames = new ArrayList<>();
+                    for (SubHeader sh : this._subHeaders) {
+                        if (sh.timeIndex == i) {
+                            if (varNames.contains(sh.name)) {
+                                sh.name = sh.name + String.valueOf(varNames.size());
+                                nameDup = true;
+                            }
+                            varNames.add(sh.name);
+                        }
+                    }
+                }
+            }
+            for (SubHeader sh : shs) {
+                Variable var = new Variable();
+                var.setName(sh.name);
+                var.setDataType(DataType.FLOAT);
+                //var.addLevel(dh.level);
+                var.setUnits(sh.unit);
+                var.setDescription(sh.description);
+
+                 if (sh.ordering.equals("YXS") || sh.ordering.equals("YXP")
+                        || sh.ordering.equals("YXW") || sh.ordering.equals("YX")) {
+                    var.addDimension(xdim);
+                    var.addDimension(0, ydim);
+                }
+                if (sh.ordering.equals("YXS") || sh.ordering.equals("YXP")
+                        || sh.ordering.equals("YXW") || sh.ordering.equals("S")
+                        || sh.ordering.equals("P")) {
+                    var.addDimension(0, zdim);
+                }
+                variables.add(var);
+            }
 
             for (Variable var : variables) {
                 var.addDimension(0, tDim);
@@ -675,7 +699,7 @@ public class MM5DataInfo extends DataInfo {
             Section section = new Section(origin, size, stride);
             Array dataArray = Array.factory(DataType.FLOAT, section.getShape());
             int rangeIdx = 0;
-            Range timeRange = section.getRank() > 2 ? section
+            Range timeRange = var.getTDimension() != null ? section
                     .getRange(rangeIdx++)
                     : new Range(0, 0);
 
@@ -683,8 +707,12 @@ public class MM5DataInfo extends DataInfo {
                     .getRange(rangeIdx++)
                     : new Range(0, 0);
 
-            Range yRange = section.getRange(rangeIdx++);
-            Range xRange = section.getRange(rangeIdx);
+            Range yRange = var.getYDimension() != null ? 
+                    section.getRange(rangeIdx++)
+                    : new Range(0,0);
+            Range xRange = var.getXDimension() != null ?
+                    section.getRange(rangeIdx)
+                    : new Range(0, 0);
 
             IndexIterator ii = dataArray.getIndexIterator();
 
@@ -712,8 +740,8 @@ public class MM5DataInfo extends DataInfo {
             Variable var = this.getVariables().get(varIdx);
             Dimension xdim = var.getXDimension();
             Dimension ydim = var.getYDimension();
-            int xn = xdim.getLength();
-            int yn = ydim.getLength();
+            int xn = xdim != null ? xdim.getLength() : 1;
+            int yn = ydim != null ? ydim.getLength() : 1;
             SubHeader sh = this.findSubHeader(var.getName(), timeIdx);
             br.seek(sh.position + sh.length);
             int n = xn * yn;
@@ -749,6 +777,48 @@ public class MM5DataInfo extends DataInfo {
         } catch (IOException ex) {
             Logger.getLogger(MM5DataInfo.class.getName()).log(Level.SEVERE, null, ex);
         }
+    }
+    
+    /**
+     * Add big header from a given file to a new file
+     * @param fileName The given file without big header
+     * @param newFileName The new file added big header
+     * @param refFileName The referece file with big header
+     * @throws FileNotFoundException
+     * @throws IOException 
+     */
+    public static void addBigHeader(String fileName, String newFileName, String refFileName) 
+            throws FileNotFoundException, IOException {
+        DataInputStream dis = new DataInputStream(new FileInputStream(fileName));
+        DataInputStream rdis = new DataInputStream(new FileInputStream(refFileName));
+        DataOutputStream dos = new DataOutputStream(new FileOutputStream(newFileName));
+
+         //write flag 0
+        dos.writeInt(4);
+        dos.writeInt(0);
+        dos.writeInt(4);
+
+         //write big header
+        int n = 117600;
+        byte[] bytes = new byte[n];
+        dos.writeInt(n);
+        rdis.read(new byte[12]);
+        rdis.readInt();
+        rdis.read(bytes);
+        dos.write(bytes);
+        dos.writeInt(n);
+
+         //Write data
+        bytes = new byte[32 * 1024];
+        int numBytes;
+        while((numBytes = dis.read(bytes)) != -1) {
+            dos.write(bytes, 0, numBytes);
+        }
+
+         //close
+        dis.close();
+        rdis.close();
+        dos.close();
     }
     
     // </editor-fold>       

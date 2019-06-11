@@ -3,7 +3,7 @@ import os
 import datetime
 
 from org.meteothink.data.meteodata import MeteoDataInfo
-from org.meteothink.ndarray import Dimension, DimensionType
+from org.meteothink.ndarray import Dimension, DimensionType, DataType
 from org.meteothink.data.meteodata.arl import ARLDataInfo
 from org.meteothink.data.meteodata.bufr import BufrDataInfo
 from org.meteothink.data.meteodata.netcdf import NetCDFDataInfo
@@ -234,6 +234,7 @@ def addfile_mm5(fname, getfn=True, reffile=None):
     
     :param fname: (*string*) The MM5 file name.
     :param getfn: (*string*) If run ``__getfilename`` function or not. Default is ``True``.
+    :param reffile: (*string*) Reference file, for the mm5 file lacking header part.
     
     :returns: (*DimDataFile*) Opened file object.
     '''
@@ -569,8 +570,12 @@ def convert2nc(infn, outfn, version='netcdf3', writedimvar=False, largefile=Fals
     
     #Add dimensions
     dims = []
+    dimnames = []
     for dim in f.dimensions():
-        dims.append(ncfile.adddim(dim.getShortName(), dim.getLength()))
+        dimname = dim.getShortName()
+        if not dimname in dimnames:
+            dims.append(ncfile.adddim(dimname, dim.getLength()))
+            dimnames.append(dimname)
         
     #Add global attributes
     for attr in f.attributes():
@@ -613,6 +618,8 @@ def convert2nc(infn, outfn, version='netcdf3', writedimvar=False, largefile=Fals
     for var in f.variables():    
         #print 'Variable: ' + var.getShortName()
         if var.hasNullDimension():
+            continue
+        if var.getDataType() == DataType.STRUCTURE:
             continue
         vdims = []
         missdim = False
