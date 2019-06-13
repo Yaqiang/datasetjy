@@ -36,6 +36,16 @@ public class Attribute {
         }
         this.name = name;
     }
+    
+    /**
+     * Constructor
+     * @param name Name of attribute
+     * @param values Values of attribute
+     */
+    public Attribute(String name, Array values) {
+        this(name);
+        setValues(values);
+    }
 
     /**
      * Construct attribute with list of String or Number values.
@@ -142,7 +152,7 @@ public class Attribute {
         this(name);
         setStringValue(val);
     }
-
+    
     /**
      * Get short name
      *
@@ -158,6 +168,24 @@ public class Attribute {
      * @param value Short name
      */
     public void setShortName(String value) {
+        this.name = value;
+    }
+
+    /**
+     * Get name
+     *
+     * @return Name
+     */
+    public String getName() {
+        return this.name;
+    }
+
+    /**
+     * Set name
+     *
+     * @param value Name
+     */
+    public void setName(String value) {
         this.name = value;
     }
 

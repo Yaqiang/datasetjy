@@ -68,7 +68,7 @@ class DimVariable(object):
                 r = self.dataset.dataset.read(self.name)
                 return DimArray(r, self.dims, self.fill_value, self.proj)
 
-         if isinstance(indices, tuple):
+        if isinstance(indices, tuple):
             allnone = True
             for k in indices:
                 if isinstance(k, slice):
