@@ -48,6 +48,9 @@ import org.meteothink.data.meteodata.micaps.MICAPS131DataInfo;
 import org.meteothink.data.meteodata.micaps.MICAPS2DataInfo;
 import org.meteothink.data.meteodata.synop.SYNOPDataInfo;
 import org.meteothink.ndarray.Array;
+import org.meteothink.ndarray.DimArray;
+import org.meteothink.ndarray.Dimension;
+import org.meteothink.ndarray.DimensionType;
 import org.meteothink.ndarray.InvalidRangeException;
 import org.meteothink.ndarray.Range;
 import ucar.nc2.NetcdfFile;
@@ -459,7 +462,7 @@ public class MeteoDataInfo {
             Logger.getLogger(MeteoDataInfo.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
+
     /**
      * Open data file
      *
@@ -613,7 +616,7 @@ public class MeteoDataInfo {
         //Get data info text
         _infoText = aDataInfo.generateInfoText();
     }
-    
+
     /**
      * Open BIL grid data
      *
@@ -643,7 +646,7 @@ public class MeteoDataInfo {
         //Get data info text
         _infoText = aDataInfo.generateInfoText();
     }
-    
+
     /**
      * Open HYSPLIT concentration grid data
      *
@@ -700,7 +703,6 @@ public class MeteoDataInfo {
 //        String[] files = trajFiles.toArray(new String[0]);
 //        openHYSPLITTrajData(files);
 //    }
-
     /**
      * Open HYSPLIT particle data
      *
@@ -738,7 +740,7 @@ public class MeteoDataInfo {
         _dataInfo = aDataInfo;
         _infoText = aDataInfo.generateInfoText();
     }
-    
+
     /**
      * Open NetCDF data
      *
@@ -751,9 +753,10 @@ public class MeteoDataInfo {
         _dataInfo = aDataInfo;
         _infoText = aDataInfo.generateInfoText();
     }
-    
+
     /**
-     * Open GRIB data by predifined version - for mixed GRIB-1 and GRIB-2 data file.
+     * Open GRIB data by predifined version - for mixed GRIB-1 and GRIB-2 data
+     * file.
      *
      * @param fileName File path
      * @param version GRIB data version: 1 or 2.
@@ -761,8 +764,9 @@ public class MeteoDataInfo {
     public void openGRIBData(String fileName, int version) {
         NetCDFDataInfo aDataInfo = new NetCDFDataInfo();
         MeteoDataType mdt = MeteoDataType.GRIB2;
-        if (version == 1)
+        if (version == 1) {
             mdt = MeteoDataType.GRIB1;
+        }
         aDataInfo.readDataInfo(fileName, mdt);
         _dataInfo = aDataInfo;
         _infoText = aDataInfo.generateInfoText();
@@ -800,7 +804,7 @@ public class MeteoDataInfo {
         _dataInfo.readDataInfo(fileName);
         _infoText = _dataInfo.generateInfoText();
     }
-    
+
     /**
      * Open MM5 Output data
      *
@@ -809,7 +813,7 @@ public class MeteoDataInfo {
      */
     public void openMM5Data(String fileName, String bigHeadFile) {
         _dataInfo = new MM5DataInfo();
-        ((MM5DataInfo)_dataInfo).readDataInfo(fileName, bigHeadFile);
+        ((MM5DataInfo) _dataInfo).readDataInfo(fileName, bigHeadFile);
         _infoText = _dataInfo.generateInfoText();
     }
 
@@ -897,7 +901,7 @@ public class MeteoDataInfo {
      * @param varName Variable name
      * @return Array data
      */
-    public Array read(String varName) {
+    public DimArray read(String varName) {
         return this._dataInfo.read(varName);
     }
 
@@ -910,17 +914,18 @@ public class MeteoDataInfo {
      * @param stride The stride array
      * @return Array data
      */
-    public Array read(String varName, int[] origin, int[] size, int[] stride) {
+    public DimArray read(String varName, int[] origin, int[] size, int[] stride) {
         return this._dataInfo.read(varName, origin, size, stride);
     }
-    
+
     /**
      * Read array data from a variable
+     *
      * @param varName Variable name
      * @param ranges List of dimension ranges
      * @return Array data
      */
-    public Array read(String varName, List<Range> ranges){
+    public DimArray read(String varName, List<Range> ranges) {
         int n = ranges.size();
         int[] origin = new int[n];
         int[] size = new int[n];
@@ -930,7 +935,7 @@ public class MeteoDataInfo {
             size[i] = ranges.get(i).last() - ranges.get(i).first() + 1;
             stride[i] = ranges.get(i).stride();
         }
-        
+
         return read(varName, origin, size, stride);
     }
 
@@ -943,7 +948,7 @@ public class MeteoDataInfo {
      * @param stride The stride array
      * @return Array data
      */
-    public Array read(String varName, List<Integer> origin, List<Integer> size, List<Integer> stride) {
+    public DimArray read(String varName, List<Integer> origin, List<Integer> size, List<Integer> stride) {
         int n = origin.size();
         int[] origin_a = new int[n];
         int[] size_a = new int[n];
@@ -973,53 +978,374 @@ public class MeteoDataInfo {
      * @param size The size array
      * @return Array data
      */
-    public Array read(String varName, List<Integer> origin, List<Integer> size) {
+    public DimArray read(String varName, List<Integer> origin, List<Integer> size) {
         return this.read(varName, origin, size, null);
     }
-    
+
     /**
      * Take array data from the variable
+     *
      * @param varName Variable name
      * @param ranges Range list
      * @return Array data
-     * @throws InvalidRangeException 
+     * @throws InvalidRangeException
      */
-    public Array take(String varName, List<Object> ranges) throws InvalidRangeException{
+    public DimArray take(String varName, List<Object> ranges) throws InvalidRangeException {
+        Variable var = this.getDataInfo().getVariable(varName);
+        List<Dimension> dims = var.getDimensions();
+        List<Dimension> ndims = new ArrayList<>();
         int n = ranges.size();
         List<Range> nranges = new ArrayList<>();
         List<Object> branges = new ArrayList<>();
-        for (int i = 0; i < n; i++){
-            if (ranges.get(i) instanceof Range){
-                nranges.add((Range)ranges.get(i));
-                branges.add(new Range(0, ((Range)ranges.get(i)).length() - 1, 1));
+        for (int i = 0; i < n; i++) {
+            if (ranges.get(i) instanceof Range) {
+                nranges.add((Range) ranges.get(i));
+                branges.add(new Range(0, ((Range) ranges.get(i)).length() - 1, 1));
+                ndims.add(dims.get(i).extract((Range) ranges.get(i)));
             } else {
-                List<Integer> list = (List<Integer>)ranges.get(i);
+                List<Integer> list = (List<Integer>) ranges.get(i);
                 int min = list.get(0);
                 int max = min;
-                if (list.size() > 1){
-                    for (int j = 1; j < list.size(); j++){
-                        if (min > list.get(j))
+                if (list.size() > 1) {
+                    for (int j = 1; j < list.size(); j++) {
+                        if (min > list.get(j)) {
                             min = list.get(j);
-                        if (max < list.get(j))
+                        }
+                        if (max < list.get(j)) {
                             max = list.get(j);
+                        }
                     }
                 }
                 Range range = new Range(min, max, 1);
                 nranges.add(range);
                 List<Integer> nlist = new ArrayList<>();
-                for (int j = 0; j < list.size(); j++){
+                for (int j = 0; j < list.size(); j++) {
                     nlist.add(list.get(j) - min);
                 }
                 branges.add(nlist);
+                ndims.add(dims.get(i).extract(nlist));
             }
         }
-        
-        Array r = read(varName, nranges);
-        r = ArrayMath.take(r, branges);
-        
-        return r;
+
+        DimArray r = read(varName, nranges);
+        Array a = ArrayMath.take(r.getArray(), branges);
+
+        return new DimArray(a, ndims);
     }
-        
+
+    /**
+     * Get grid data
+     *
+     * @param varName Variable name
+     * @return Grid data
+     */
+    public DimArray getGridData(String varName) {
+        _varIdx = getVariableIndex(varName);
+        if (_varIdx < 0) {
+//            MathParser mathParser = new MathParser(this);
+//            try {
+//                GridData gridData = (GridData) mathParser.evaluate(varName);
+//                gridData.projInfo = this.getProjectionInfo();
+//                return gridData;
+//            } catch (ParseException | IOException ex) {
+//                Logger.getLogger(MeteoDataInfo.class.getName()).log(Level.SEVERE, null, ex);
+//                return null;
+//            }
+            return null;
+        } else {
+            try {
+                DimArray gridData = this.getGridData();
+                return gridData;
+            } catch (InvalidRangeException ex) {
+                Logger.getLogger(MeteoDataInfo.class.getName()).log(Level.SEVERE, null, ex);
+                return null;
+            }
+        }
+    }
+
+    /**
+     * Get grid data
+     *
+     * @return Grid data
+     * @throws org.meteothink.ndarray.InvalidRangeException
+     */
+    public DimArray getGridData() throws InvalidRangeException {
+        if (_varIdx < 0) {
+            return null;
+        }
+
+        Variable var = this.getDataInfo().getVariables().get(_varIdx);
+        List<Dimension> dims = var.getDimensions();
+        List<Range> ranges = new ArrayList<>();
+        switch (_dimensionSet) {
+            case Lat_Lon:
+                for (Dimension dim : dims) {
+                    switch (dim.getDimType()) {
+                        case T:
+                            ranges.add(new Range(_timeIdx, _timeIdx, 1));
+                            break;
+                        case Z:
+                            ranges.add(new Range(_levelIdx, _levelIdx, 1));
+                            break;
+                        case Y:
+                            ranges.add(new Range(0, dim.getLength() - 1, 1));
+                            break;
+                        case X:
+                            ranges.add(new Range(0, dim.getLength() - 1, 1));
+                            break;
+                        default:
+                            ranges.add(new Range(0, 0, 1));
+                    }
+                }
+                break;
+            case Time_Lon:
+                for (Dimension dim : dims) {
+                    switch (dim.getDimType()) {
+                        case T:
+                            ranges.add(new Range(0, dim.getLength() - 1, 1));
+                            break;
+                        case Z:
+                            ranges.add(new Range(_levelIdx, _levelIdx, 1));
+                            break;
+                        case Y:
+                            ranges.add(new Range(_latIdx, _latIdx, 1));
+                            break;
+                        case X:
+                            ranges.add(new Range(0, dim.getLength() - 1, 1));
+                            break;
+                        default:
+                            ranges.add(new Range(0, 0, 1));
+                    }
+                }
+                break;
+            case Time_Lat:
+                for (Dimension dim : dims) {
+                    switch (dim.getDimType()) {
+                        case T:
+                            ranges.add(new Range(0, dim.getLength() - 1, 1));
+                            break;
+                        case Z:
+                            ranges.add(new Range(_levelIdx, _levelIdx, 1));
+                            break;
+                        case Y:
+                            ranges.add(new Range(0, dim.getLength() - 1, 1));
+                            break;
+                        case X:
+                            ranges.add(new Range(_lonIdx, _lonIdx, 1));
+                            break;
+                        default:
+                            ranges.add(new Range(0, 0, 1));
+                    }
+                }
+                break;
+            case Level_Lon:
+                for (Dimension dim : dims) {
+                    switch (dim.getDimType()) {
+                        case T:
+                            ranges.add(new Range(_timeIdx, _timeIdx, 1));
+                            break;
+                        case Z:
+                            ranges.add(new Range(0, dim.getLength() - 1, 1));
+                            break;
+                        case Y:
+                            ranges.add(new Range(_latIdx, _latIdx, 1));
+                            break;
+                        case X:
+                            ranges.add(new Range(0, dim.getLength() - 1, 1));
+                            break;
+                        default:
+                            ranges.add(new Range(0, 0, 1));
+                    }
+                }
+                break;
+            case Level_Lat:
+                for (Dimension dim : dims) {
+                    switch (dim.getDimType()) {
+                        case T:
+                            ranges.add(new Range(_timeIdx, _timeIdx, 1));
+                            break;
+                        case Z:
+                            ranges.add(new Range(0, dim.getLength() - 1, 1));
+                            break;
+                        case Y:
+                            ranges.add(new Range(0, dim.getLength() - 1, 1));
+                            break;
+                        case X:
+                            ranges.add(new Range(_lonIdx, _lonIdx, 1));
+                            break;
+                        default:
+                            ranges.add(new Range(0, 0, 1));
+                    }
+                }
+                break;
+            case Level_Time:
+                for (Dimension dim : dims) {
+                    switch (dim.getDimType()) {
+                        case T:
+                            ranges.add(new Range(0, dim.getLength() - 1, 1));
+                            break;
+                        case Z:
+                            ranges.add(new Range(0, dim.getLength() - 1, 1));
+                            break;
+                        case Y:
+                            ranges.add(new Range(_latIdx, _latIdx, 1));
+                            break;
+                        case X:
+                            ranges.add(new Range(_lonIdx, _lonIdx, 1));
+                            break;
+                        default:
+                            ranges.add(new Range(0, 0, 1));
+                    }
+                }
+                break;
+            case Lat:
+                for (Dimension dim : dims) {
+                    switch (dim.getDimType()) {
+                        case T:
+                            ranges.add(new Range(_timeIdx, _timeIdx, 1));
+                            break;
+                        case Z:
+                            ranges.add(new Range(_levelIdx, _levelIdx, 1));
+                            break;
+                        case Y:
+                            ranges.add(new Range(0, dim.getLength() - 1, 1));
+                            break;
+                        case X:
+                            ranges.add(new Range(_lonIdx, _lonIdx, 1));
+                            break;
+                        default:
+                            ranges.add(new Range(0, 0, 1));
+                    }
+                }
+                break;
+            case Level:
+                for (Dimension dim : dims) {
+                    switch (dim.getDimType()) {
+                        case T:
+                            ranges.add(new Range(_timeIdx, _timeIdx, 1));
+                            break;
+                        case Z:
+                            ranges.add(new Range(0, dim.getLength() - 1, 1));
+                            break;
+                        case Y:
+                            ranges.add(new Range(_latIdx, _latIdx, 1));
+                            break;
+                        case X:
+                            ranges.add(new Range(_lonIdx, _lonIdx, 1));
+                            break;
+                        default:
+                            ranges.add(new Range(0, 0, 1));
+                    }
+                }
+                break;
+            case Lon:
+                for (Dimension dim : dims) {
+                    switch (dim.getDimType()) {
+                        case T:
+                            ranges.add(new Range(_timeIdx, _timeIdx, 1));
+                            break;
+                        case Z:
+                            ranges.add(new Range(_levelIdx, _levelIdx, 1));
+                            break;
+                        case Y:
+                            ranges.add(new Range(_latIdx, _latIdx, 1));
+                            break;
+                        case X:
+                            ranges.add(new Range(0, dim.getLength() - 1, 1));
+                            break;
+                        default:
+                            ranges.add(new Range(0, 0, 1));
+                    }
+                }
+                break;
+            case Time:
+                for (Dimension dim : dims) {
+                    switch (dim.getDimType()) {
+                        case T:
+                            ranges.add(new Range(0, dim.getLength() - 1, 1));
+                            break;
+                        case Z:
+                            ranges.add(new Range(_levelIdx, _levelIdx, 1));
+                            break;
+                        case Y:
+                            ranges.add(new Range(_latIdx, _latIdx, 1));
+                            break;
+                        case X:
+                            ranges.add(new Range(_lonIdx, _lonIdx, 1));
+                            break;
+                        default:
+                            ranges.add(new Range(0, 0, 1));
+                    }
+                }
+                break;
+        }
+        DimArray gdata = this.read(var.getShortName(), ranges);
+
+        return gdata;
+    }
+
+    /**
+     * Get station data
+     *
+     * @param varName Variable name
+     * @return Station data
+     */
+    public DimArray getStationData(String varName) {
+        _varIdx = getVariableIndex(varName);
+        if (_varIdx >= 0) {
+            try {
+                return this.getStationData();
+            } catch (InvalidRangeException ex) {
+                Logger.getLogger(MeteoDataInfo.class.getName()).log(Level.SEVERE, null, ex);
+                return null;
+            }
+        } else {
+//            MathParser mathParser = new MathParser(this);
+//            try {
+//                StationData stationData = (StationData) mathParser.evaluate(varName);
+//                stationData.projInfo = this.getProjectionInfo();
+//                return stationData;
+//            } catch (ParseException ex) {
+//                Logger.getLogger(MeteoDataInfo.class.getName()).log(Level.SEVERE, null, ex);
+//                return null;
+//            } catch (IOException ex) {
+//                Logger.getLogger(MeteoDataInfo.class.getName()).log(Level.SEVERE, null, ex);
+//                return null;
+//            }
+            return null;
+        }
+    }
+
+    /**
+     * Get station data
+     *
+     * @return Station data
+     * @throws org.meteothink.ndarray.InvalidRangeException
+     */
+    public DimArray getStationData() throws InvalidRangeException {
+        if (_varIdx >= 0) {
+            Variable var = this.getDataInfo().getVariables().get(_varIdx);
+            List<Dimension> dims = var.getDimensions();
+            List<Range> ranges = new ArrayList<>();
+            for (Dimension dim : dims) {
+                switch (dim.getDimType()) {
+                    case T:
+                        ranges.add(new Range(_timeIdx, _timeIdx, 1));
+                        break;
+                    case Z:
+                        ranges.add(new Range(_levelIdx, _levelIdx, 1));
+                        break;
+                    default:
+                        ranges.add(new Range(0, dim.getLength() - 1, 1));
+                }
+            }
+            DimArray stData = this.read(var.getShortName(), ranges);
+            return stData;
+        } else {
+            return null;
+        }
+    }
+
     /**
      * Get variable index
      *
@@ -1036,7 +1362,7 @@ public class MeteoDataInfo {
     // </editor-fold>
     // <editor-fold desc="Others">
     @Override
-    public String toString(){
+    public String toString() {
         return new File(this.getFileName()).getName();
     }
     // </editor-fold>

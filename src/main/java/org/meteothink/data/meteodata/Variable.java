@@ -20,6 +20,8 @@ import java.util.Date;
 import java.util.List;
 import org.meteothink.common.util.DateUtil;
 import org.meteothink.ndarray.DataType;
+import org.meteothink.ndarray.Range;
+import org.meteothink.ndarray.Section;
 
 /**
  *
@@ -148,6 +150,24 @@ public class Variable {
      */
     public List<Dimension> getDimensions() {
         return this.dimensions;
+    }
+    
+    /**
+     * Get dimensions by section
+     * @param section The section
+     * @return Result dimesions
+     */
+    public List<Dimension> getDimensions(Section section) {
+        List<Dimension> dims = new ArrayList<>();
+        for (int i = 0; i < section.getRank(); i++) {
+            Range range = section.getRange(i);
+            if (range.length() > 1) {
+                Dimension dim = this.dimensions.get(i).extract(range);
+                dims.add(dim);
+            }
+        }
+        
+        return dims;
     }
 
     /**

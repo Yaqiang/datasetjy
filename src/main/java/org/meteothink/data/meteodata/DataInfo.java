@@ -21,6 +21,7 @@ import org.locationtech.proj4j.CoordinateReferenceSystem;
 import org.meteothink.util.DateUtil;
 import org.meteothink.common.projection.KnownCoordinateSystems;
 import org.meteothink.ndarray.Array;
+import org.meteothink.ndarray.DimArray;
 import org.meteothink.ndarray.Dimension;
 
 /**
@@ -534,7 +535,7 @@ public abstract class DataInfo {
      * @param varName Variable name
      * @return Array
      */
-    public abstract Array read(String varName);
+    public abstract DimArray read(String varName);
 
     /**
      * Read array data
@@ -545,7 +546,7 @@ public abstract class DataInfo {
      * @param stride Stride array
      * @return Array
      */
-    public abstract Array read(String varName, int[] origin, int[] size, int[] stride);
+    public abstract DimArray read(String varName, int[] origin, int[] size, int[] stride);
     
     /**
      * Get global attributes

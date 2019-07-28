@@ -17,10 +17,7 @@ import org.meteothink.data.meteodata.DataInfo;
 import org.meteothink.ndarray.Dimension;
 import org.meteothink.ndarray.DimensionType;
 import org.meteothink.data.meteodata.Variable;
-import org.meteothink.util.MIMath;
 import org.meteothink.common.PointD;
-import org.meteothink.ndarray.DataType;
-import java.awt.Color;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -38,12 +35,8 @@ import org.meteothink.data.XYListDataset;
 import org.meteothink.data.meteodata.MeteoDataType;
 import org.meteothink.util.DataConvert;
 import org.meteothink.util.DateUtil;
-import org.meteothink.ndarray.Array;
-import org.meteothink.ndarray.Index;
-import org.meteothink.ndarray.InvalidRangeException;
-import org.meteothink.ndarray.Range;
-import org.meteothink.ndarray.Section;
 import org.meteothink.data.meteodata.Attribute;
+import org.meteothink.ndarray.DimArray;
 
 /**
  *
@@ -273,12 +266,12 @@ public class HYSPLITTrajDataInfo extends DataInfo {
      * @return Array data
      */
     @Override
-    public Array read(String varName) {
+    public DimArray read(String varName) {
         int[] origin = new int[]{0, 0};
         int[] size = new int[]{this.trajNum, this.endPointNum};
         int[] stride = new int[]{1, 1};
 
-        Array r = read(varName, origin, size, stride);
+        DimArray r = read(varName, origin, size, stride);
         
         return r;
     }
@@ -293,7 +286,7 @@ public class HYSPLITTrajDataInfo extends DataInfo {
      * @return Array data
      */
     @Override
-    public Array read(String varName, int[] origin, int[] size, int[] stride) {
+    public DimArray read(String varName, int[] origin, int[] size, int[] stride) {
         return null;
     }
 

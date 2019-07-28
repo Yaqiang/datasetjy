@@ -32,6 +32,7 @@ import org.meteothink.util.DateUtil;
 import org.meteothink.ndarray.Array;
 import org.meteothink.ndarray.DataType;
 import org.meteothink.data.meteodata.Attribute;
+import org.meteothink.ndarray.DimArray;
 
 /**
  *
@@ -189,7 +190,7 @@ public class MICAPS2DataInfo extends DataInfo {
      * @return Array data
      */
     @Override
-    public Array read(String varName){
+    public DimArray read(String varName){
         Variable var = this.getVariable(varName);
         int n = var.getDimNumber();
         int[] origin = new int[n];
@@ -201,7 +202,7 @@ public class MICAPS2DataInfo extends DataInfo {
             stride[i] = 1;
         }
         
-        Array r = read(varName, origin, size, stride);
+        DimArray r = read(varName, origin, size, stride);
         
         return r;
     }
@@ -216,7 +217,7 @@ public class MICAPS2DataInfo extends DataInfo {
      * @return Array data
      */
     @Override
-    public Array read(String varName, int[] origin, int[] size, int[] stride) {
+    public DimArray read(String varName, int[] origin, int[] size, int[] stride) {
         int varIdx = this._fieldList.indexOf(varName);
         if (varIdx < 0) {
             return null;
@@ -255,8 +256,9 @@ public class MICAPS2DataInfo extends DataInfo {
                     break;
             }
         }
+        Variable var = this.getVariable(varName);
 
-        return r;
+        return new DimArray(r, var.getDimensions());
     }
 
     public StationModelData getStationModelData(int timeIdx, int levelIdx) {

@@ -38,6 +38,7 @@ import org.meteothink.data.meteodata.MeteoDataType;
 import org.meteothink.util.DateUtil;
 import org.meteothink.ndarray.Array;
 import org.meteothink.data.meteodata.Attribute;
+import org.meteothink.ndarray.DimArray;
 
 /**
  *
@@ -309,7 +310,7 @@ public class SYNOPDataInfo extends DataInfo {
      * @return Array data
      */
     @Override
-    public Array read(String varName){
+    public DimArray read(String varName){
         Variable var = this.getVariable(varName);
         int n = var.getDimNumber();
         int[] origin = new int[n];
@@ -321,7 +322,7 @@ public class SYNOPDataInfo extends DataInfo {
             stride[i] = 1;
         }
         
-        Array r = read(varName, origin, size, stride);
+        DimArray r = read(varName, origin, size, stride);
         
         return r;
     }
@@ -336,7 +337,7 @@ public class SYNOPDataInfo extends DataInfo {
      * @return Array data
      */
     @Override
-    public Array read(String varName, int[] origin, int[] size, int[] stride) {
+    public DimArray read(String varName, int[] origin, int[] size, int[] stride) {
         return null;
     }
 

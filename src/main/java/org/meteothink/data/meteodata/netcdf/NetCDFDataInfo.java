@@ -43,6 +43,7 @@ import org.meteothink.ndarray.IndexIterator;
 import org.meteothink.ndarray.InvalidRangeException;
 import org.meteothink.ndarray.MAMath;
 import org.meteothink.data.meteodata.Attribute;
+import org.meteothink.ndarray.DimArray;
 import ucar.nc2.NetcdfFile;
 import ucar.nc2.NetcdfFileWriter;
 import ucar.nc2.dataset.NetcdfDataset;
@@ -1940,11 +1941,12 @@ public class NetCDFDataInfo extends DataInfo {
      * @return Array data
      */
     @Override
-    public Array read(String varName) {
+    public DimArray read(String varName) {
         try {
             if (ncfile == null) {
                 ncfile = NetcdfFile.open(this.getFileName());
             }
+            Variable var1 = this.getVariable(varName);
             ucar.nc2.Variable var = ncfile.findVariable(varName);            
             if (var == null) {
                 List<ucar.nc2.Variable> vars = ncfile.getVariables();
@@ -1963,7 +1965,7 @@ public class NetCDFDataInfo extends DataInfo {
 
             Array data = NCUtil.convertArray(var.read());
 
-            return data;
+            return new DimArray(data, var1.getDimensions());
         } catch (IOException ex) {
             Logger.getLogger(NetCDFDataInfo.class.getName()).log(Level.SEVERE, null, ex);
             return null;
@@ -1989,11 +1991,12 @@ public class NetCDFDataInfo extends DataInfo {
      * @return Array data
      */
     @Override
-    public Array read(String varName, int[] origin, int[] size, int[] stride) {
+    public DimArray read(String varName, int[] origin, int[] size, int[] stride) {
         try {
             if (ncfile == null) {
                 ncfile = NetcdfDataset.openFile(this.getFileName(), null);
             }
+            Variable var1 = this.getVariable(varName);
             ucar.nc2.Variable var = ncfile.findVariable(varName);
             if (var == null) {
                 List<ucar.nc2.Variable> vars = ncfile.getVariables();
@@ -2019,6 +2022,7 @@ public class NetCDFDataInfo extends DataInfo {
             }
 
             Array data;
+            ucar.ma2.Section section;
             if (negStride) {
                 int[] pStride = new int[stride.length];
                 List<Integer> flips = new ArrayList<>();
@@ -2028,7 +2032,7 @@ public class NetCDFDataInfo extends DataInfo {
                         flips.add(i);
                     }
                 }
-                ucar.ma2.Section section = new ucar.ma2.Section(origin, size, pStride);
+                section = new ucar.ma2.Section(origin, size, pStride);
                 Array r = NCUtil.convertArray(var.read(section));
                 for (int i : flips) {
                     r = r.flip(i);
@@ -2036,7 +2040,7 @@ public class NetCDFDataInfo extends DataInfo {
                 data = Array.factory(r.getDataType(), r.getShape());
                 MAMath.copy(data, r);
             } else {
-                ucar.ma2.Section section = new ucar.ma2.Section(origin, size, stride);
+                section = new ucar.ma2.Section(origin, size, stride);
                 data = NCUtil.convertArray(var.read(section));
             }
 
@@ -2051,7 +2055,7 @@ public class NetCDFDataInfo extends DataInfo {
                 data = ArrayMath.add(ArrayMath.mul(data, scale_factor), add_offset);
             }
 
-            return data;
+            return new DimArray(data.reduce(), var1.getDimensions(NCUtil.convertSection(section)));
         } catch (IOException ex) {
             Logger.getLogger(NetCDFDataInfo.class.getName()).log(Level.SEVERE, null, ex);
             return null;
@@ -2375,7 +2379,7 @@ public class NetCDFDataInfo extends DataInfo {
                         dimNames.add(dim.getShortName());
                     }
                     if (!dimNames.contains(timeDimStr)) {
-                        Array varaData = aDataInfo.read(var.getShortName());
+                        Array varaData = aDataInfo.read(var.getShortName()).getArray();
                         ncfilew.write(var, NCUtil.convertArray(varaData));
                     }
                 }
@@ -2435,7 +2439,7 @@ public class NetCDFDataInfo extends DataInfo {
                         start[v] = 0;
                         count[v] = dvar.getDimension(v).getLength();
                     }
-                    Array varaData = aDataInfo.read(dvar.getShortName());
+                    Array varaData = aDataInfo.read(dvar.getShortName()).getArray();
                     start[tDimIdx] += tDimNum;
                     if (dimNum == 1) {
                         List<Integer> times = aDataInfo.getTimeValues(sTime, "hours");
@@ -2575,7 +2579,7 @@ public class NetCDFDataInfo extends DataInfo {
                         dimNames.add(dim.getShortName());
                     }
                     if (!dimNames.contains(timeDimStr)) {
-                        Array varaData = aDataInfo.read(var.getShortName());
+                        Array varaData = aDataInfo.read(var.getShortName()).getArray();
                         ncfilew.write(var, NCUtil.convertArray(varaData));
                     }
                 }
@@ -2643,7 +2647,7 @@ public class NetCDFDataInfo extends DataInfo {
                         start[v] = 0;
                         count[v] = dvar.getDimension(v).getLength();
                     }
-                    Array varaData = aDataInfo.read(dvar.getShortName());
+                    Array varaData = aDataInfo.read(dvar.getShortName()).getArray();
                     start[tDimIdx] += tDimNum;
                     if (dimNum == 1) {
                         List<Integer> times = aDataInfo.getTimeValues(sTime, "hours");
@@ -2738,7 +2742,7 @@ public class NetCDFDataInfo extends DataInfo {
 
         //Write variable data
         for (ucar.nc2.Variable nvar : nvars) {
-            ncfile.write(nvar, NCUtil.convertArray(aDataInfo.read(nvar.getShortName())));
+            ncfile.write(nvar, NCUtil.convertArray(aDataInfo.read(nvar.getShortName()).getArray()));
         }
 
         //Add data in more files
@@ -2749,7 +2753,7 @@ public class NetCDFDataInfo extends DataInfo {
             }
             NetCDFDataInfo df = mncf.get(i);
             for (ucar.nc2.Variable nvar : vars) {
-                ncfile.write(nvar, NCUtil.convertArray(df.read(nvar.getShortName())));
+                ncfile.write(nvar, NCUtil.convertArray(df.read(nvar.getShortName()).getArray()));
             }
         }
 

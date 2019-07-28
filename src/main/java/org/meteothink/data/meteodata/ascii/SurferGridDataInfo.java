@@ -34,6 +34,7 @@ import org.meteothink.ndarray.InvalidRangeException;
 import org.meteothink.ndarray.Range;
 import org.meteothink.ndarray.Section;
 import org.meteothink.data.meteodata.Attribute;
+import org.meteothink.ndarray.DimArray;
 
 /**
  *
@@ -152,7 +153,7 @@ public class SurferGridDataInfo extends DataInfo {
      * @return Array data
      */
     @Override
-    public Array read(String varName){
+    public DimArray read(String varName){
         Variable var = this.getVariable(varName);
         int n = var.getDimNumber();
         int[] origin = new int[n];
@@ -164,7 +165,7 @@ public class SurferGridDataInfo extends DataInfo {
             stride[i] = 1;
         }
         
-        Array r = read(varName, origin, size, stride);
+        DimArray r = read(varName, origin, size, stride);
         
         return r;
     }
@@ -179,8 +180,9 @@ public class SurferGridDataInfo extends DataInfo {
      * @return Array data
      */
     @Override
-    public Array read(String varName, int[] origin, int[] size, int[] stride) {
+    public DimArray read(String varName, int[] origin, int[] size, int[] stride) {
         try {
+            Variable var = this.getVariable(varName);
             Section section = new Section(origin, size, stride);
             Array dataArray = Array.factory(DataType.FLOAT, section.getShape());
             int rangeIdx = 0;
@@ -189,7 +191,7 @@ public class SurferGridDataInfo extends DataInfo {
             IndexIterator ii = dataArray.getIndexIterator();
             readXY(yRange, xRange, ii);
 
-            return dataArray;
+            return new DimArray(dataArray.reduce(), var.getDimensions(section));
         } catch (InvalidRangeException ex) {
             Logger.getLogger(SurferGridDataInfo.class.getName()).log(Level.SEVERE, null, ex);
             return null;

@@ -16,9 +16,7 @@ package org.meteothink.data.meteodata.hysplit;
 import org.meteothink.data.meteodata.DataInfo;
 import org.meteothink.ndarray.Dimension;
 import org.meteothink.ndarray.DimensionType;
-import org.meteothink.data.meteodata.StationModelData;
 import org.meteothink.data.meteodata.Variable;
-import org.meteothink.common.Extent;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.text.SimpleDateFormat;
@@ -31,8 +29,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.meteothink.data.meteodata.MeteoDataType;
 import org.meteothink.util.DateUtil;
-import org.meteothink.ndarray.Array;
 import org.meteothink.data.meteodata.Attribute;
+import org.meteothink.ndarray.DimArray;
 
 /**
  *
@@ -145,7 +143,7 @@ public class HYSPLITPartDataInfo extends DataInfo {
      * @return Array data
      */
     @Override
-    public Array read(String varName){
+    public DimArray read(String varName){
         return null;
     }
     
@@ -159,7 +157,7 @@ public class HYSPLITPartDataInfo extends DataInfo {
      * @return Array data
      */
     @Override
-    public Array read(String varName, int[] origin, int[] size, int[] stride) {
+    public DimArray read(String varName, int[] origin, int[] size, int[] stride) {
         return null;
     }
 

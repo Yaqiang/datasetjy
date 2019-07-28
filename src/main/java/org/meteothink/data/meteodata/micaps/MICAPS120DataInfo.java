@@ -41,6 +41,9 @@ import org.meteothink.util.DateUtil;
 import org.meteothink.ndarray.Array;
 import org.meteothink.ndarray.DataType;
 import org.meteothink.data.meteodata.Attribute;
+import org.meteothink.ndarray.DimArray;
+import org.meteothink.ndarray.InvalidRangeException;
+import org.meteothink.ndarray.Section;
 
 /**
  *
@@ -183,7 +186,7 @@ public class MICAPS120DataInfo extends DataInfo {
      * @return Array data
      */
     @Override
-    public Array read(String varName){
+    public DimArray read(String varName){
         Variable var = this.getVariable(varName);
         int n = var.getDimNumber();
         int[] origin = new int[n];
@@ -195,7 +198,7 @@ public class MICAPS120DataInfo extends DataInfo {
             stride[i] = 1;
         }
         
-        Array r = read(varName, origin, size, stride);
+        DimArray r = read(varName, origin, size, stride);
         
         return r;
     }
@@ -210,7 +213,7 @@ public class MICAPS120DataInfo extends DataInfo {
      * @return Array data
      */
     @Override
-    public Array read(String varName, int[] origin, int[] size, int[] stride) {
+    public DimArray read(String varName, int[] origin, int[] size, int[] stride) {
         int varIdx = this._fieldList.indexOf(varName);
         if (varIdx < 0)
             return null;
@@ -261,8 +264,15 @@ public class MICAPS120DataInfo extends DataInfo {
                 }
             }
         }
-        
-        return r;
+        Variable var = this.getVariable(varName);
+        try {
+            Section section = new Section(origin, size, stride);
+            
+            return new DimArray(r, var.getDimensions(section));
+        } catch (InvalidRangeException ex) {
+            Logger.getLogger(MICAPS120DataInfo.class.getName()).log(Level.SEVERE, null, ex);
+            return null;
+        }                
     }
     
     /**

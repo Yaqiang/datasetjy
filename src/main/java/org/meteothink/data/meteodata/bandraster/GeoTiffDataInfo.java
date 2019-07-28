@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.meteothink.math.ArrayMath;
 import org.meteothink.data.mapdata.geotiff.GeoTiff;
 import org.meteothink.data.meteodata.DataInfo;
 import org.meteothink.ndarray.Dimension;
@@ -30,6 +29,7 @@ import org.meteothink.ndarray.IndexIterator;
 import org.meteothink.ndarray.InvalidRangeException;
 import org.meteothink.ndarray.Range;
 import org.meteothink.data.meteodata.Attribute;
+import org.meteothink.ndarray.DimArray;
 
 /**
  *
@@ -119,15 +119,16 @@ public class GeoTiffDataInfo extends DataInfo {
      * @return Array data
      */
     @Override
-    public Array read(String varName){        
+    public DimArray read(String varName){        
         Array r = null;
         try {
             r = this.geoTiff.readArray();
         } catch (IOException ex) {
             Logger.getLogger(GeoTiffDataInfo.class.getName()).log(Level.SEVERE, null, ex);
         }
+        Variable var = this.getVariable(varName);
         
-        return r;
+        return new DimArray(r, var.getDimensions());
     }
     
     /**
@@ -140,11 +141,10 @@ public class GeoTiffDataInfo extends DataInfo {
      * @return Array data
      */
     @Override
-    public Array read(String varName, int[] origin, int[] size, int[] stride) {
+    public DimArray read(String varName, int[] origin, int[] size, int[] stride) {
         try {
-            Array array = read(varName);
-            array = ArrayMath.section(array, origin, size, stride);            
-            return array;
+            DimArray da = read(varName);
+            return da.section(origin, size, stride);
         } catch (InvalidRangeException ex) {
             Logger.getLogger(GeoTiffDataInfo.class.getName()).log(Level.SEVERE, null, ex);
             return null;

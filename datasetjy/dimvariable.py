@@ -62,25 +62,27 @@ class DimVariable(object):
         return self.__str__()
         
     def __getitem__(self, indices):
-        if isinstance(indices, slice):
+        if isinstance(indices, slice) and self.ndim > 1:
             k = indices
             if k.start is None and k.stop is None and k.step is None:
-                r = self.dataset.dataset.read(self.name)
-                return DimArray(r, self.dims, self.fill_value, self.proj)
+                inds = []
+                for i in range(self.ndim):
+                    inds.append(slice(None))
+                indices = tuple(inds)
 
-        if isinstance(indices, tuple):
-            allnone = True
-            for k in indices:
-                if isinstance(k, slice):
-                    if (not k.start is None) or (not k.stop is None) or (not k.step is None):
-                        allnone = False
-                        break
-                else:
-                    allnone = False
-                    break
-            if allnone:
-                r = self.dataset.dataset.read(self.name)
-                return DimArray(r, self.dims, self.fill_value, self.proj)
+        # if isinstance(indices, tuple):
+            # allnone = True
+            # for k in indices:
+                # if isinstance(k, slice):
+                    # if (not k.start is None) or (not k.stop is None) or (not k.step is None):
+                        # allnone = False
+                        # break
+                # else:
+                    # allnone = False
+                    # break
+            # if allnone:
+                # r = self.dataset.dataset.read(self.name)
+                # return DimArray(r, self.dims, self.fill_value, self.proj)
 
         if indices is None:
             inds = []
@@ -274,9 +276,9 @@ class DimVariable(object):
                     dims.append(dim)
         #rr = self.dataset.read(self.name, origin, size, stride).reduce()
         if onlyrange:
-            rr = self.dataset.dataset.read(self.name, ranges)
+            rr = self.dataset.dataset.read(self.name, ranges).getArray()
         else:
-            rr = self.dataset.dataset.take(self.name, ranges)
+            rr = self.dataset.dataset.take(self.name, ranges).getArray()
         if rr.getSize() == 1:
             return rr.getObject(0)
         else:

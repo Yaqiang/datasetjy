@@ -32,6 +32,7 @@ import org.meteothink.data.meteodata.MeteoDataType;
 import org.meteothink.util.GlobalUtil;
 import org.meteothink.ndarray.Array;
 import org.meteothink.data.meteodata.Attribute;
+import org.meteothink.ndarray.DimArray;
 
 /**
  *
@@ -132,7 +133,7 @@ public class LonLatStationDataInfo extends DataInfo {
      * @return Array data
      */
     @Override
-    public Array read(String varName){
+    public DimArray read(String varName){
         return null;
     }
 
@@ -146,7 +147,7 @@ public class LonLatStationDataInfo extends DataInfo {
      * @return Array data
      */
     @Override
-    public Array read(String varName, int[] origin, int[] size, int[] stride) {
+    public DimArray read(String varName, int[] origin, int[] size, int[] stride) {
         return null;
     }
 

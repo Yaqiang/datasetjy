@@ -7,11 +7,15 @@ package org.meteothink.data.meteodata.netcdf;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.meteothink.data.meteodata.Attribute;
 import org.meteothink.data.meteodata.Variable;
 import org.meteothink.ndarray.Array;
 import org.meteothink.ndarray.DataType;
 import org.meteothink.ndarray.Dimension;
+import org.meteothink.ndarray.InvalidRangeException;
+import org.meteothink.ndarray.Section;
 
 /**
  *
@@ -127,5 +131,20 @@ public class NCUtil {
         var.setUnits(ncVar.getUnitsString());
         
         return var;
+    }
+    
+    /**
+     * Convert netcdf section to meteothink section
+     * @param ncSection Netcdf section
+     * @return Meteothink section
+     */
+    public static Section convertSection(ucar.ma2.Section ncSection) {
+        try {
+            Section section = new Section(ncSection.getOrigin(), ncSection.getShape(), ncSection.getStride());
+            return section;
+        } catch (InvalidRangeException ex) {
+            Logger.getLogger(NCUtil.class.getName()).log(Level.SEVERE, null, ex);
+            return null;
+        }
     }
 }

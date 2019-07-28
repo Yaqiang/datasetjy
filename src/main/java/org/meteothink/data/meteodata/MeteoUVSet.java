@@ -13,6 +13,7 @@
  */
 package org.meteothink.data.meteodata;
 
+import org.meteothink.data.meteodata.MeteoDataInfo;
 import java.util.List;
 
 /**

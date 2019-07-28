@@ -38,6 +38,7 @@ import org.meteothink.ndarray.InvalidRangeException;
 import org.meteothink.ndarray.Range;
 import org.meteothink.ndarray.Section;
 import org.meteothink.data.meteodata.Attribute;
+import org.meteothink.ndarray.DimArray;
 
 /**
  *
@@ -254,7 +255,7 @@ public class BILDataInfo extends DataInfo {
      * @return Array data
      */
     @Override
-    public Array read(String varName){
+    public DimArray read(String varName){
         return readArray_bil(varName);
     }
     
@@ -268,7 +269,7 @@ public class BILDataInfo extends DataInfo {
      * @return Array data
      */
     @Override
-    public Array read(String varName, int[] origin, int[] size, int[] stride) {
+    public DimArray read(String varName, int[] origin, int[] size, int[] stride) {
         try {
             Section section = new Section(origin, size, stride);
             Variable var = this.getVariable(varName);
@@ -279,14 +280,14 @@ public class BILDataInfo extends DataInfo {
             Range xRange = section.getRange(rangeIdx);
             IndexIterator ii = array.getIndexIterator();
             this.readArray_bil_xy(varIdx, array.getDataType(), yRange, xRange, ii);
-            return array;
+            return new DimArray(array.reduce(), var.getDimensions(section));
         } catch (InvalidRangeException ex) {
             Logger.getLogger(BILDataInfo.class.getName()).log(Level.SEVERE, null, ex);
         }
         return null;
     }
     
-    private Array readArray_bil(String varName) {
+    private DimArray readArray_bil(String varName) {
         Variable var = this.getVariable(varName);
         int varIdx = this.getVariables().indexOf(var);
         try {
@@ -330,7 +331,7 @@ public class BILDataInfo extends DataInfo {
             }
 
             br.close();
-            return gData;
+            return new DimArray(gData, var.getDimensions());
         } catch (FileNotFoundException ex) {
             Logger.getLogger(BILDataInfo.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
